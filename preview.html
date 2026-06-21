@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Půjdeme ven?</title>
+
+  <style>
+    /* =========================================================
+       1) DESIGN SYSTÉM
+       Tady upravuješ barvy, velikosti a celkovou atmosféru.
+       ========================================================= */
+
+    :root {
+      --bg-start: #020617;
+      --bg-middle: #0f172a;
+      --bg-end: #083344;
+
+      --card: rgba(15, 23, 42, 0.76);
+      --card-border: rgba(148, 163, 184, 0.22);
+
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --muted-strong: #cbd5e1;
+
+      --primary: #38bdf8;
+      --primary-dark: #0284c7;
+      --secondary: #22c55e;
+      --accent: #facc15;
+
+      --surface: rgba(255, 255, 255, 0.07);
+      --surface-hover: rgba(255, 255, 255, 0.12);
+
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+      --radius-lg: 32px;
+      --radius-md: 20px;
+      --radius-sm: 14px;
+    }
+
+
+    /* =========================================================
+       2) ZÁKLAD STRÁNKY
+       ========================================================= */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+
+      display: grid;
+      place-items: center;
+
+      overflow: hidden;
+
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      color: var(--text);
+
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.22), transparent 34%),
+        radial-gradient(circle at 85% 20%, rgba(34, 197, 94, 0.18), transparent 28%),
+        radial-gradient(circle at 50% 95%, rgba(250, 204, 21, 0.13), transparent 34%),
+        linear-gradient(145deg, var(--bg-start), var(--bg-middle), var(--bg-end));
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+
+      pointer-events: none;
+
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+
+      mask-image: linear-gradient(to bottom, black, transparent 78%);
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+
+      opacity: 0.08;
+      pointer-events: none;
+
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+
+    /* =========================================================
+       3) HLAVNÍ APP KARTA
+       ========================================================= */
+
+    .app {
+      width: min(94vw, 460px);
+      position: relative;
+      z-index: 1;
+    }
+
+    .card {
+      min-height: 560px;
+      padding: 26px;
+
+      position: relative;
+      overflow: hidden;
+
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 28%),
+        var(--card);
+
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+
+      background:
+        radial-gradient(circle at 20% 0%, rgba(56, 189, 248, 0.20), transparent 35%),
+        radial-gradient(circle at 90% 5%, rgba(34, 197, 94, 0.14), transparent 32%);
+    }
+
+    .card-inner {
+      min-height: 508px;
+
+      position: relative;
+      z-index: 1;
+
+      display: flex;
+      flex-direction: column;
+    }
+
+
+    /* =========================================================
+       4) HORNÍ LIŠTA A PROGRESS
+       ========================================================= */
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      margin-bottom: 34px;
+    }
+
+    .badge {
+      padding: 8px 12px;
+
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 999px;
+
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted-strong);
+
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .progress {
+      display: flex;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+
+      border-radius: 99px;
+      background: rgba(148, 163, 184, 0.35);
+
+      transition:
+        width 0.25s ease,
+        background 0.25s ease;
+    }
+
+    .dot.active {
+      width: 24px;
+      background: var(--primary);
+    }
+
+
+    /* =========================================================
+       5) OBRAZOVKY
+       ========================================================= */
+
+    .screen {
+      flex: 1;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+
+      animation: screenIn 0.32s ease both;
+    }
+
+    .screen.hidden {
+      display: none;
+    }
+
+    @keyframes screenIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .emoji {
+      width: 68px;
+      height: 68px;
+      margin: 0 auto 22px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+
+      font-size: 34px;
+
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    h1 {
+      max-width: 360px;
+      margin: 0 auto 12px;
+
+      font-size: clamp(32px, 7vw, 44px);
+      line-height: 0.96;
+      letter-spacing: -0.065em;
+
+      text-align: center;
+    }
+
+    .big {
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    p {
+      max-width: 335px;
+      margin: 0 auto 28px;
+
+      font-size: 15px;
+      line-height: 1.6;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      margin-top: auto;
+      padding-top: 22px;
+
+      font-size: 12px;
+      text-align: center;
+      color: rgba(203, 213, 225, 0.56);
+    }
+
+
+    /* =========================================================
+       6) TLAČÍTKA
+       ========================================================= */
+
+    .btns {
+      display: grid;
+      gap: 12px;
+    }
+
+    button,
+    .choice {
+      border: 0;
+      border-radius: var(--radius-md);
+
+      cursor: pointer;
+
+      font: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      color: white;
+
+      transition:
+        transform 0.18s ease,
+        filter 0.18s ease,
+        background 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px 18px;
+
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 16px 34px rgba(56, 189, 248, 0.24);
+    }
+
+    button:hover,
+    .choice:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+    }
+
+    .ghost {
+      color: var(--muted-strong);
+
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: none;
+    }
+
+    .ghost:hover {
+      border-color: rgba(148, 163, 184, 0.38);
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+
+    /* =========================================================
+       7) VÝBĚR AKTIVITY
+       ========================================================= */
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+
+      margin-top: 4px;
+    }
+
+    .choice {
+      min-height: 86px;
+      padding: 14px;
+
+      display: grid;
+      place-items: center;
+
+      border: 1px solid rgba(148, 163, 184, 0.22);
+
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted-strong);
+
+      background: var(--surface);
+    }
+
+    .choice-icon {
+      display: block;
+      margin-bottom: 6px;
+
+      font-size: 24px;
+    }
+
+    .choice.selected {
+      color: var(--text);
+      border-color: rgba(56, 189, 248, 0.74);
+      background: rgba(56, 189, 248, 0.15);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.10);
+    }
+
+
+    /* =========================================================
+       8) INPUT A SHRNUTÍ
+       ========================================================= */
+
+    input {
+      width: 100%;
+      padding: 17px 18px;
+
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-radius: var(--radius-md);
+
+      outline: none;
+
+      font: inherit;
+      font-size: 15px;
+      color: var(--text);
+
+      background: rgba(255, 255, 255, 0.07);
+
+      transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease;
+    }
+
+    input:focus {
+      border-color: rgba(56, 189, 248, 0.72);
+      background: rgba(255, 255, 255, 0.09);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12);
+    }
+
+    input::placeholder {
+      color: rgba(203, 213, 225, 0.55);
+    }
+
+    .summary {
+      display: grid;
+      gap: 10px;
+
+      margin: 6px 0 22px;
+      padding: 16px;
+
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: var(--radius-md);
+
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .summary-row b {
+      max-width: 55%;
+
+      color: var(--text);
+      text-align: right;
+    }
+
+
+    /* =========================================================
+       9) KONFETY
+       ========================================================= */
+
+    .sparkle {
+      position: fixed;
+      z-index: 10;
+
+      font-size: 22px;
+
+      pointer-events: none;
+
+      animation: sparklePop 1.1s ease-out forwards;
+    }
+
+    @keyframes sparklePop {
+      to {
+        opacity: 0;
+        transform: translate(var(--x), var(--y)) rotate(360deg) scale(0.6);
+      }
+    }
+
+
+    /* =========================================================
+       10) MOBILNÍ ÚPRAVY
+       ========================================================= */
+
+    @media (max-width: 420px) {
+      body {
+        padding: 14px;
+      }
+
+      .card {
+        min-height: 560px;
+        padding: 22px;
+      }
+
+      .topbar {
+        margin-bottom: 26px;
+      }
+
+      .grid {
+        gap: 10px;
+      }
+
+      .choice {
+        min-height: 78px;
+        padding: 12px 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="noise"></div>
+
+  <main class="app">
+    <article class="card">
+      <div class="card-inner">
+
+        <!-- =====================================================
+             HORNÍ LIŠTA
+             ===================================================== -->
+        <header class="topbar">
+          <div class="badge">malý plán</div>
+
+          <div class="progress" aria-label="Postup">
+            <span class="dot active" data-dot="0"></span>
+            <span class="dot" data-dot="1"></span>
+            <span class="dot" data-dot="2"></span>
+            <span class="dot" data-dot="3"></span>
+          </div>
+        </header>
+
+
+        <!-- =====================================================
+             OBRAZOVKA 1: ÚVOD
+             ===================================================== -->
+        <section class="screen" data-step="0">
+          <div class="emoji">😜</div>
+
+          <h1>Půjdeme ven?</h1>
+
+          <p>
+            Napadlo mě, že bychom mohli něco podniknout.
+          </p>
+
+          <div class="btns">
+            <button onclick="goToScreen(1)">Jasně, proč ne</button>
+            <button class="ghost" id="noBtn">Ne</button>
+          </div>
+
+          <div class="footer-note">
+            první možnost je statisticky výhodnější
+          </div>
+        </section>
+
+
+        <!-- =====================================================
+             OBRAZOVKA 2: AKTIVITA
+             ===================================================== -->
+        <section class="screen hidden" data-step="1">
+          <div class="emoji">🎯</div>
+
+          <h1>Co podnikneme?</h1>
+
+          <p>
+            Vyber jednu možnost, nebo nech prostor pro překvapení.
+          </p>
+
+          <div class="grid" id="vibes">
+            <div class="choice" data-value="piknik venku">
+              <span class="choice-icon">🧺</span>
+              piknik venku
+            </div>
+
+            <div class="choice" data-value="minigolf">
+              <span class="choice-icon">⛳</span>
+              minigolf
+            </div>
+
+            <div class="choice" data-value="filmový večer">
+              <span class="choice-icon">🎬</span>
+              filmový večer
+            </div>
+
+            <div class="choice" data-value="něco dobrého k jídlu">
+              <span class="choice-icon">🍝</span>
+              něco k jídlu
+            </div>
+
+            <div class="choice" data-value="káva a procházka">
+              <span class="choice-icon">☕</span>
+              káva a procházka
+            </div>
+
+            <div class="choice" data-value="drink">
+              <span class="choice-icon">🍹</span>
+              drink
+            </div>
+
+            <div class="choice" data-value="výlet">
+              <span class="choice-icon">🚶‍♂️</span>
+              výlet
+            </div>
+
+            <div class="choice" data-value="překvap mě">
+              <span class="choice-icon">✨</span>
+              překvap mě
+            </div>
+          </div>
+
+          <button style="margin-top: 18px;" onclick="goToScreen(2)">
+            Pokračovat
+          </button>
+        </section>
+
+
+        <!-- =====================================================
+             OBRAZOVKA 3: ČAS
+             ===================================================== -->
+        <section class="screen hidden" data-step="2">
+          <div class="emoji">📅</div>
+
+          <h1>Kdy se ti to hodí?</h1>
+
+          <p>
+            Napiš den a čas.
+          </p>
+
+          <input id="whenInput" placeholder="např. pátek v 19:00" />
+
+          <button style="margin-top: 18px;" onclick="finishPlan()">
+            Potvrdit plán
+          </button>
+        </section>
+
+
+        <!-- =====================================================
+             OBRAZOVKA 4: SHRNUTÍ
+             ===================================================== -->
+        <section class="screen hidden" data-step="3">
+          <div class="emoji">🙌</div>
+
+          <h1 class="big">Plán je na světě</h1>
+
+          <p>
+            Udělej screenshot a pošli mi ho.
+          </p>
+
+          <div class="summary">
+            <div class="summary-row">
+              <span>Co podnikneme</span>
+              <b id="finalVibe">překvap mě</b>
+            </div>
+
+            <div class="summary-row">
+              <span>Kdy</span>
+              <b id="finalWhen">brzy</b>
+            </div>
+
+            <div class="summary-row">
+              <span>Stav plánu</span>
+              <b>schváleno</b>
+            </div>
+
+            <div class="summary-row">
+              <span>Atmosféra</span>
+              <b>v pohodě</b>
+            </div>
+          </div>
+
+          <button onclick="restartApp()">
+            Spustit znovu
+          </button>
+        </section>
+
+      </div>
+    </article>
+  </main>
+
+
+  <script>
+    /* =========================================================
+       1) PROMĚNNÉ
+       ========================================================= */
+
+    const screens = [...document.querySelectorAll('.screen')];
+    const dots = [...document.querySelectorAll('.dot')];
+    const choices = document.querySelectorAll('.choice');
+    const noButton = document.getElementById('noBtn');
+    const whenInput = document.getElementById('whenInput');
+
+    let selectedVibe = 'překvap mě';
+
+
+    /* =========================================================
+       2) PŘEPÍNÁNÍ OBRAZOVEK
+       ========================================================= */
+
+    function goToScreen(step) {
+      screens.forEach((screen) => {
+        const isCurrentScreen = Number(screen.dataset.step) === step;
+        screen.classList.toggle('hidden', !isCurrentScreen);
+      });
+
+      updateProgress(step);
+      createSparkles();
+    }
+
+    function updateProgress(step) {
+      dots.forEach((dot) => {
+        const isActive = Number(dot.dataset.dot) === step;
+        dot.classList.toggle('active', isActive);
+      });
+    }
+
+
+    /* =========================================================
+       3) VÝBĚR AKTIVITY
+       ========================================================= */
+
+    choices.forEach((choice) => {
+      choice.addEventListener('click', () => {
+        clearSelectedChoices();
+
+        choice.classList.add('selected');
+        selectedVibe = choice.dataset.value;
+
+        createSparkles(10);
+      });
+    });
+
+    function clearSelectedChoices() {
+      choices.forEach((choice) => {
+        choice.classList.remove('selected');
+      });
+    }
+
+
+    /* =========================================================
+       4) DOKONČENÍ A RESET
+       ========================================================= */
+
+    function finishPlan() {
+      const finalVibe = document.getElementById('finalVibe');
+      const finalWhen = document.getElementById('finalWhen');
+
+      finalVibe.textContent = selectedVibe;
+      finalWhen.textContent = whenInput.value || 'brzy';
+
+      goToScreen(3);
+      createSparkles(50);
+    }
+
+    function restartApp() {
+      selectedVibe = 'překvap mě';
+      whenInput.value = '';
+
+      clearSelectedChoices();
+      goToScreen(0);
+    }
+
+
+    /* =========================================================
+       5) TLAČÍTKO „NE“
+       ========================================================= */
+
+    noButton.addEventListener('mouseenter', moveNoButton);
+    noButton.addEventListener('click', moveNoButton);
+
+    function moveNoButton() {
+      const messages = [
+        'zkus jinou možnost',
+        'tohle tlačítko nefunguje',
+        'špatná volba',
+        'ještě jednou'
+      ];
+
+      const randomMessage = getRandomItem(messages);
+      const randomX = Math.random() * 80 - 40;
+      const randomY = Math.random() * 50 - 25;
+
+      noButton.textContent = randomMessage;
+      noButton.style.transform = `translate(${randomX}px, ${randomY}px)`;
+    }
+
+
+    /* =========================================================
+       6) KONFETY
+       ========================================================= */
+
+    function createSparkles(count = 18) {
+      const symbols = ['✨', '✅', '🎯', '⭐', '🙌', '😄'];
+
+      for (let i = 0; i < count; i++) {
+        const sparkle = document.createElement('div');
+
+        sparkle.className = 'sparkle';
+        sparkle.textContent = getRandomItem(symbols);
+
+        sparkle.style.left = `${innerWidth / 2 + Math.random() * 80 - 40}px`;
+        sparkle.style.top = `${innerHeight / 2 + Math.random() * 80 - 40}px`;
+
+        sparkle.style.setProperty('--x', `${Math.random() * 520 - 260}px`);
+        sparkle.style.setProperty('--y', `${Math.random() * 520 - 260}px`);
+
+        document.body.appendChild(sparkle);
+
+        setTimeout(() => {
+          sparkle.remove();
+        }, 1100);
+      }
+    }
+
+    function getRandomItem(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+  </script>
+</body>
+</html>
