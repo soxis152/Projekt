@@ -495,6 +495,40 @@
       color: #86efac;
     }
 
+    .success-message {
+      width: 100%;
+      margin: 0 auto 18px;
+      padding: 16px 15px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+
+      border: 1px solid rgba(34, 197, 94, 0.42);
+      border-radius: var(--radius-md);
+
+      font-size: clamp(16px, 4.4vw, 18px);
+      font-weight: 900;
+      line-height: 1.35;
+      text-align: center;
+      color: #dcfce7;
+
+      background:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.28), transparent 34%),
+        rgba(34, 197, 94, 0.13);
+
+      box-shadow:
+        0 0 0 4px rgba(34, 197, 94, 0.08),
+        0 18px 38px rgba(34, 197, 94, 0.14);
+    }
+
+    .success-icon {
+      flex-shrink: 0;
+      font-size: 22px;
+      filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.55));
+    }
+
     .summary {
       display: grid;
       gap: 10px;
@@ -819,9 +853,10 @@
 
           <h1 class="big">Plán je na světě</h1>
 
-          <p id="finalMessage">
-            Hotovo. Odpověď se odeslala.
-          </p>
+          <div class="success-message" id="finalMessage">
+            <span class="success-icon">✅</span>
+            <span>Hotovo. Odpověď se odeslala.</span>
+          </div>
 
           <div class="summary">
             <div class="summary-row">
@@ -851,7 +886,7 @@
           </div>
 
           <button onclick="restartApp()">
-            Spustit znovu
+            Dokončit
           </button>
         </section>
 
@@ -983,7 +1018,10 @@
           throw new Error('Odeslání se nepovedlo.');
         }
 
-        finalMessage.textContent = 'Hotovo. Odpověď se odeslala.';
+        finalMessage.innerHTML = `
+          <span class="success-icon">✅</span>
+          <span>Hotovo. Odpověď se odeslala.</span>
+        `;
         goToScreen(3);
         createSparkles(50);
       } catch (error) {
